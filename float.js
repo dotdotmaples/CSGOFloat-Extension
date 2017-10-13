@@ -1,4 +1,4 @@
-import {Filters} from './lib/filters';
+import Filters from './lib/filters';
 import {createElement} from './lib/utils';
 import ItemInfo from './lib/ItemInfo';
 import FloatQueue from './lib/FloatQueue';
