@@ -2,6 +2,7 @@ import {Filters} from './lib/filters';
 import {createElement} from './lib/utils';
 import ItemInfo from './lib/ItemInfo';
 import FloatQueue from './lib/FloatQueue';
+import Item from './lib/Item';
 
 const itemInfo = new ItemInfo();
 const floatQueue = new FloatQueue();
@@ -23,7 +24,6 @@ window.addEventListener('message', (e) => {
     }
 });
 
-
 const retrieveListingInfoFromPage = function(listingId) {
     if (listingId != null && (listingId in steamListingInfo)) {
         return Promise.resolve(steamListingInfo);
@@ -38,9 +38,9 @@ const retrieveListingInfoFromPage = function(listingId) {
     });
 };
 
-const getFloatData = function(listingId, inspectLink) {
-    if (itemInfo.hasListingId(listingId)) {
-        return Promise.resolve({iteminfo: itemInfo.getInfo(listingId)});
+const getFloatData = function(item) {
+    if (itemInfo.hasItem(item)) {
+        return Promise.resolve({iteminfo: itemInfo.getItemInfo(item)});
     }
 
     return new Promise((resolve, reject) => {
@@ -51,8 +51,8 @@ const getFloatData = function(listingId, inspectLink) {
     });
 };
 
-const showFloat = function(listingId) {
-    let itemInfo = itemInfo.getInfo(listingId);
+const showFloat = function(item) {
+    let itemInfo = item.iteminfo;
 
     let floatDiv = document.querySelector(`#item_${listingId}_floatdiv`);
 
@@ -73,15 +73,8 @@ const showFloat = function(listingId) {
         let seedDiv = floatDiv.querySelector('.itemseed');
         if (seedDiv) seedDiv.innerText = `Paint Seed: ${itemInfo.paintseed}`;
 
-        let vars = {
-            'float': itemInfo.floatvalue,
-            'seed': itemInfo.paintseed,
-            'minfloat': itemInfo.min,
-            'maxfloat': itemInfo.max
-        };
-
         // Check to see if there is a filter match
-        let filterColour = filters.getMatchColour(vars);
+        let filterColour = filters.getMatchColour(item.filterVars);
         
         if (filterColour) {
             floatDiv.parentNode.parentNode.style.backgroundColor = filterColour;
@@ -100,10 +93,12 @@ floatQueue.process((item) => {
     let buttonText = floatDiv.querySelector('span');
     if (buttonText) buttonText.innerText = 'Fetching';
 
-    return getFloatData(item.listingId, item.inspectLink)
+    return getFloatData(item)
         .then((data) => {
-            itemInfo.addInfo(item.listingId, data.iteminfo);
-            showFloat(item.listingId);
+            item.addItemInfo(data.iteminfo);
+            itemInfo.addItem(item);
+
+            showFloat(item);
         })
         .catch((err) => {
             // Reset the button text for this itemid
@@ -123,16 +118,15 @@ const getAllFloats = function() {
         // Get all current items on the page (in proper order)
         let listingRows = document.querySelectorAll('.market_listing_row.market_recent_listing_row');
 
-        for (let row of listingRows) {
-            let id = row.id.replace('listing_', '');
-
-            let listingData = steamListingData[id];
-
-            let inspectLink = listingData.asset.market_actions[0].link
+        for (const row of listingRows) {
+            const id = row.id.replace('listing_', '');
+            const listingData = steamListingData[id];
+            const inspectLink = listingData.asset.market_actions[0].link
             .replace('%listingid%', id)
             .replace('%assetid%', listingData.asset.id);
 
-            floatQueue.addItem(id, inspectLink);
+            const item = new Item(id, inspectLink);
+            floatQueue.addItem(item);
         }
     });
 };
@@ -209,7 +203,7 @@ const addButtons = function() {
 
         // check if we already have the float for this item
         if (itemInfo.hasListingId(id)) {
-            showFloat(id);
+            showFloat(itemInfo.getItemForId(id));
         }
     }
 
