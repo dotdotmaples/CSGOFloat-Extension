@@ -26,6 +26,7 @@
     "babel": "inherit",
     "require": [
       "babel-register",
+      "babel-polyfill",
       "./tests/helpers/setup-browser-env.js"
     ]
   }
