@@ -1,11 +1,13 @@
-import Filters from './lib/filters';
+import Filters from './lib/Filters';
 import {createElement} from './lib/utils';
 import ItemInfo from './lib/ItemInfo';
 import FloatQueue from './lib/FloatQueue';
 import Item from './lib/Item';
+import FilterUI from './lib/FilterUI';
 
 const itemInfo = new ItemInfo();
 const floatQueue = new FloatQueue();
+const filterUI = new FilterUI();
 
 let floatTimer;
 let steamListingInfo = {};
@@ -148,8 +150,8 @@ const addFloatUtilities = function() {
     githubLink.classList.add('float-github');
     parentDiv.appendChild(githubLink);
 
-    // Add filter div
-    filters.addFilterUI(parentDiv);
+    // Add filter ui
+    filterUI.addUIToElement(parentDiv);
 
     document.querySelector('#searchResultsTable').insertBefore(parentDiv, document.querySelector('#searchResultsRows'));
 };
