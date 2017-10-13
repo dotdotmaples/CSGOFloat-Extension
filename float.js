@@ -1,4 +1,5 @@
 import {Filters} from './lib/filters';
+import {createElement} from './lib/utils';
 
 let floatQueue = [];
 let floatData = {};
@@ -146,19 +147,19 @@ const getAllFloats = function() {
 
 // Adds float utilities
 const addFloatUtilities = function() {
-    let parentDiv = document.createElement('div');
-    parentDiv.id = 'floatUtilities';
+    const parentDiv = createElement('div', {id: 'floatUtilities'});
 
     // Add get all floats button
-    let allFloatButton = createButton('Get All Floats', 'green');
+    const allFloatButton = createButton('Get All Floats', 'green');
     allFloatButton.addEventListener('click', getAllFloats);
     parentDiv.appendChild(allFloatButton);
 
     // Add github link
-    let githubLink = document.createElement('a');
+    const githubLink = createElement('a', {
+        href: 'https://github.com/Step7750/CSGOFloat',
+        innerText: 'Powered by CSGOFloat'
+    });
     githubLink.classList.add('float-github');
-    githubLink.href = 'https://github.com/Step7750/CSGOFloat';
-    githubLink.innerText = 'Powered by CSGOFloat';
     parentDiv.appendChild(githubLink);
 
     // Add filter div
@@ -197,9 +198,8 @@ const addButtons = function() {
 
         let listingNameElement = row.querySelector(`#listing_${id}_name`);
 
-        let floatDiv = document.createElement('div');
+        let floatDiv = createElement('div', {id: `item_${id}_floatdiv`});
         floatDiv.classList.add('float-div');
-        floatDiv.id = `item_${id}_floatdiv`;
         listingNameElement.parentElement.appendChild(floatDiv);
 
         let getFloatButton = createButton('Get Float', 'green');
@@ -210,7 +210,7 @@ const addButtons = function() {
         let divClassNames = ['floatmessage', 'itemfloat', 'itemseed'];
 
         for (let className of divClassNames) {
-            let div = document.createElement('div');
+            let div = createElement('div');
             div.classList.add(className);
             floatDiv.appendChild(div);
         }
