@@ -1,10 +1,11 @@
 import {Filters} from './lib/filters';
 import {createElement} from './lib/utils';
 import ItemInfo from './lib/ItemInfo';
+import FloatQueue from './lib/FloatQueue';
 
 const itemInfo = new ItemInfo();
+const floatQueue = new FloatQueue();
 
-let floatQueue = [];
 let floatTimer;
 let steamListingInfo = {};
 let listingInfoPromises = [];
@@ -88,43 +89,32 @@ const showFloat = function(listingId) {
     }
 };
 
-const processFloatQueue = function() {
-    if (floatQueue.length === 0) { return setTimeout(processFloatQueue, 100); }
-
-    let lastItem = floatQueue.shift();
-
-    let floatDiv = document.querySelector(`#item_${lastItem.listingId}_floatdiv`);
+floatQueue.process((item) => {
+    let floatDiv = document.querySelector(`#item_${item.listingId}_floatdiv`);
 
     if (!floatDiv) {
         // they have switched pages since initiating the request, so continue
-        processFloatQueue();
-        return;
+        return Promise.resolve();
     }
 
     let buttonText = floatDiv.querySelector('span');
-
     if (buttonText) buttonText.innerText = 'Fetching';
 
-    getFloatData(lastItem.listingId, lastItem.inspectLink)
-    .then((data) => {
-        itemInfo.addInfo(lastItem.listingId, data.iteminfo);
+    return getFloatData(item.listingId, item.inspectLink)
+        .then((data) => {
+            itemInfo.addInfo(item.listingId, data.iteminfo);
+            showFloat(item.listingId);
+        })
+        .catch((err) => {
+            // Reset the button text for this itemid
+            if (buttonText) buttonText.innerText = 'Get Float';
 
-        showFloat(lastItem.listingId);
-
-        processFloatQueue();
-    })
-    .catch((err) => {
-        // Reset the button text for this itemid
-        if (buttonText) buttonText.innerText = 'Get Float';
-
-        // Change the message div for this item to the error
-        if (floatDiv) {
-            floatDiv.querySelector('.floatmessage').innerText = err.error || 'Unknown Error';
-        }
-
-        processFloatQueue();
-    });
-};
+            // Change the message div for this item to the error
+            if (floatDiv) {
+                floatDiv.querySelector('.floatmessage').innerText = err.error || 'Unknown Error';
+            }
+        });
+});
 
 // Puts all of the available items on the page into the queue for float retrieval
 const getAllFloats = function() {
@@ -142,7 +132,7 @@ const getAllFloats = function() {
             .replace('%listingid%', id)
             .replace('%assetid%', listingData.asset.id);
 
-            floatQueue.push({ listingId: id, inspectLink: inspectLink });
+            floatQueue.addItem(id, inspectLink);
         }
     });
 };
@@ -184,7 +174,7 @@ const getFloatButtonClicked = function(e) {
         .replace('%listingid%', id)
         .replace('%assetid%', listingData.asset.id);
 
-        floatQueue.push({ listingId: id, inspectLink: inspectLink });
+        floatQueue.addItem(id, inspectLink);
     });
 };
 
@@ -245,9 +235,6 @@ script.innerText = `
 document.head.appendChild(script);
 
 floatTimer = setInterval(() => { addButtons(); }, 500);
-
-// start the queue processing loop
-processFloatQueue();
 
 const logStyle = 'background: #222; color: #fff;';
 console.log('%c CSGOFloat Market Checker (v1.2.0) by Step7750 ', logStyle);
