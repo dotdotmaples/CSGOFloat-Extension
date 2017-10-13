@@ -1,8 +1,10 @@
 import {Filters} from './lib/filters';
 import {createElement} from './lib/utils';
+import ItemInfo from './lib/ItemInfo';
+
+const itemInfo = new ItemInfo();
 
 let floatQueue = [];
-let floatData = {};
 let floatTimer;
 let steamListingInfo = {};
 let listingInfoPromises = [];
@@ -36,12 +38,12 @@ const retrieveListingInfoFromPage = function(listingId) {
 };
 
 const getFloatData = function(listingId, inspectLink) {
-    if (listingId in floatData) {
-        return Promise.resolve({iteminfo: floatData[listingId]});
+    if (itemInfo.hasListingId(listingId)) {
+        return Promise.resolve({iteminfo: itemInfo.getInfo(listingId)});
     }
 
     return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({'inspectLink': inspectLink}, (data) => {
+        chrome.runtime.sendMessage({inspectLink}, (data) => {
             if (data && data.iteminfo) resolve(data);
             else reject(data);
         });
@@ -49,7 +51,7 @@ const getFloatData = function(listingId, inspectLink) {
 };
 
 const showFloat = function(listingId) {
-    let itemInfo = floatData[listingId];
+    let itemInfo = itemInfo.getInfo(listingId);
 
     let floatDiv = document.querySelector(`#item_${listingId}_floatdiv`);
 
@@ -105,7 +107,7 @@ const processFloatQueue = function() {
 
     getFloatData(lastItem.listingId, lastItem.inspectLink)
     .then((data) => {
-        floatData[lastItem.listingId] = data.iteminfo;
+        itemInfo.addInfo(lastItem.listingId, data.iteminfo);
 
         showFloat(lastItem.listingId);
 
@@ -216,7 +218,7 @@ const addButtons = function() {
         }
 
         // check if we already have the float for this item
-        if (id in floatData) {
+        if (itemInfo.hasListingId(id)) {
             showFloat(id);
         }
     }
