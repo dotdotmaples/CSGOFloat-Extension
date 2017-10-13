@@ -1,3 +1,5 @@
+import {Filters} from './lib/filters';
+
 let floatQueue = [];
 let floatData = {};
 let floatTimer;
@@ -34,7 +36,7 @@ const retrieveListingInfoFromPage = function(listingId) {
 
 const getFloatData = function(listingId, inspectLink) {
     if (listingId in floatData) {
-        return Promise.resolve({ iteminfo: floatData[listingId] });
+        return Promise.resolve({iteminfo: floatData[listingId]});
     }
 
     return new Promise((resolve, reject) => {
